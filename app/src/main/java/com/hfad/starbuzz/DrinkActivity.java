@@ -1,9 +1,14 @@
 package com.hfad.starbuzz;
 
 import android.app.Activity;
+import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
+import android.database.sqlite.SQLiteException;
+import android.database.sqlite.SQLiteOpenHelper;
 import android.os.Bundle;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 public class DrinkActivity extends Activity {
     public static final String EXTRA_DRINKID = "drinkId";
@@ -15,20 +20,42 @@ public class DrinkActivity extends Activity {
 
         //Получить напиток из да нных интента
         int drinkId = (int)getIntent().getExtras().get(EXTRA_DRINKID);
-        Drink drink = Drink.drinks[drinkId];
 
-        //Заполнение название напитка
-        TextView name = findViewById(R.id.name);
-        name.setText(drink.getName());
+        //Создание курсора
+        SQLiteOpenHelper starbuzzDatabaseHelper = new StarbuzzDatabaseHelper(this);
+        try{
+            SQLiteDatabase db = starbuzzDatabaseHelper.getReadableDatabase();
 
-        //Заполнение описания напитка
-        TextView description = findViewById(R.id.description);
-        description.setText(drink.getDescription());
+            Cursor cursor = db.query("DRINK",
+                    new String[] {"NAME", "DESCRIPTION", "IMAGE_RESOURCE_ID"},
+                    "_id = ?",
+                    new String[] {Integer.toString(drinkId)},
+                    null, null, null);
+            //Переход к первой записи в курсоре
+            if(cursor.moveToFirst()){
+                String nameText = cursor.getString(0);
+                String descriptionText = cursor.getString(1);
+                int photoId = cursor.getInt(2);
 
-        //Заполнение изображения напитка
-        ImageView photo = findViewById(R.id.photo);
-        photo.setImageResource(drink.getImageResourceId());
-        photo.setContentDescription(drink.getName());
+                //Заполнение названия напитка
+                TextView name = findViewById(R.id.name);
+                name.setText(nameText);
+
+                //Заполнение описания напитка
+                TextView description = findViewById(R.id.description);
+                description.setText(descriptionText);
+
+                //Заполнение изображения напитка
+                ImageView photo = findViewById(R.id.photo);
+                photo.setImageResource(photoId);
+                photo.setContentDescription(nameText);
+            }
+            cursor.close();
+            db.close();
+        } catch (SQLiteException e){
+            Toast toast = Toast.makeText(this, "Database unavailable", Toast.LENGTH_SHORT);
+            toast.show();
+        }
 
     }
 }

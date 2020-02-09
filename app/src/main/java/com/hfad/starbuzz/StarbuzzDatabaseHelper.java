@@ -46,6 +46,7 @@ public class StarbuzzDatabaseHelper extends SQLiteOpenHelper {
         }
         if (oldVersion < 2) {
             //Код добавления нового столбца
+            db.execSQL("ALTER TABLE DRINK ADD COLUMN FAVORITE NUMERIC");
         }
     }
 }
